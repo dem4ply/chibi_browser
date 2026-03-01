@@ -30,6 +30,6 @@ setup(
     name='chibi_browser',
     packages=find_packages(include=['chibi_browser', 'chibi_browser.*']),
     url='https://github.com/dem4ply/chibi_browser',
-    version='0.0.1',
+    version='1.0.0',
     zip_safe=False,
 )

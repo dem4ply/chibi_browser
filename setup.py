@@ -8,7 +8,7 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = []
+requirements = [ 'chibi_site>=0.1.1', 'selenium>=4.41', '' ]
 
 setup(
     author="dem4ply",
@@ -22,11 +22,6 @@ setup(
         'Programming Language :: Python :: 3.8',
     ],
     description="Capa para controlar selenium para chibi_ste",
-    entry_points={
-        'console_scripts': [
-            'chibi_browser=chibi_browser.cli:main',
-        ],
-    },
     install_requires=requirements,
     license="WTFPL",
     long_description=readme + '\n\n' + history,

@@ -2,11 +2,14 @@
 import time
 import logging
 from chibi_site import Chibi_site
-from chibi_browser.snippet import build_driver
+from chibi_browser.snippet import (
+    build_driver, add_mouse_to_selenium, hide_mouse_to_selenium,
+)
 from chibi_site.soup import Chibi_soup
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
+from .press_key import Press_key
 
 
 logger = logging.getLogger( 'chibi_browser' )
@@ -35,7 +38,11 @@ class Chibi_browser( Chibi_site ):
         return self.build_driver_func( *args, **kw )
 
     def get( self, *args, **kw ):
-        raise NotImplementedError
+        if not args and not kw:
+            self.browser.get( self )
+        else:
+            raise NotImplementedError(
+                "no esta implementado el get con argumentos" )
 
     def post( self, *args, **kw ):
         raise NotImplementedError
@@ -62,7 +69,8 @@ class Chibi_browser( Chibi_site ):
 
     def close( self ):
         try:
-            self._browser.close()
+            # self._browser.close()
+            self._browser.quit()
             del self._browser
         except AttributeError:
             logger.warning(
@@ -90,7 +98,7 @@ class Chibi_browser( Chibi_site ):
         """
         return self.browser.find_elements( By.CSS_SELECTOR, selector )
 
-    def select_one( self, selector ):
+    def select_one( self, selector, func=None ):
         """
         atajo para buscar un elemento con css
 
@@ -100,12 +108,17 @@ class Chibi_browser( Chibi_site ):
         ----------
         selector: str
             selector de css con el que se buscaran elementos
+        func: function
+            funcion que se usara para filtrar los resultados
 
         Returns
         -------
         WebElement
         """
-        return self.browser.find_element( By.CSS_SELECTOR, selector )
+        if func is None:
+            return self.browser.find_element( By.CSS_SELECTOR, selector )
+        elements = self.select( selector )
+        return next( filter( func, elements ) )
 
     def wait( self, timeout=5, msg=None ):
         if msg:
@@ -119,3 +132,27 @@ class Chibi_browser( Chibi_site ):
             return self.kw.download_folder
         raise NotImplementedError(
             "no implementado cuando es el folder por default" )
+
+    def show_mouse( self ):
+        add_mouse_to_selenium( self.browser )
+
+    def hide_mouse( self ):
+        hide_mouse_to_selenium( self.browser )
+
+    @property
+    def press_key( self ):
+        return Press_key( self.browser )
+
+    @property
+    def cookies( self ):
+        """
+        regresa las cookies del navegador
+        """
+        return self.browser.get_cookies()
+
+    @property
+    def user_agent( self ):
+        """
+        regresa el user agent del navegador
+        """
+        return self.browser.execute_script( "return navigator.userAgent;" )

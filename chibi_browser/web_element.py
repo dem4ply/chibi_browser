@@ -3,6 +3,7 @@ import random
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
+from humancursor import WebCursor
 
 
 class Chibi_web_element( WebElement ):
@@ -47,11 +48,20 @@ class Chibi_web_element( WebElement ):
         """
         return self.find_element( By.CSS_SELECTOR, selector )
 
+    def hover_mouse( self, *, random_coficient=0 ):
+        self.sleep( random_coficient )
+        self.human.move_to( self )
+        actions = ActionChains( self.driver )
+        actions.move_to_element( self ).perform()
+
     def click( self, *, random_coficient=0 ):
         """
-        mueve el mouse a la pocicion del elemento y hace click usando actions
+        mueve el mouse a la pocicion del elemento y hace click
+        """
+        self.hover_mouse( random_coficient=random_coficient )
+        self.sleep( random_coficient )
+        self.human.click()
 
-        usando los actionschain
         """
         if random_coficient:
             random_time = random_coficient * random.random()
@@ -63,3 +73,16 @@ class Chibi_web_element( WebElement ):
             random_time = random_coficient * random.random()
             time.sleep( random_time )
         actions.click( self ).perform()
+        """
+
+    def sleep( self, random_coficient ):
+        random_time = random_coficient * random.random()
+        time.sleep( random_time )
+
+    @property
+    def human( self ):
+        try:
+            return self._human
+        except AttributeError:
+            self._human = WebCursor( self.driver )
+            return self._human

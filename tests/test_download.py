@@ -14,6 +14,11 @@ class Test_download( unittest.TestCase ):
         cls.browser = Chibi_browser(
             cls.url, download_folder=Chibi_temp_path() )
 
+    def setUp( self ):
+        super().setUp()
+        self.browser.wait().until( wait_conditions.document.ready )
+        self.browser.show_mouse()
+
     @classmethod
     def tearDownClass( cls ):
         cls.browser.close()
@@ -35,6 +40,7 @@ class Test_download( unittest.TestCase ):
         self.browser.wait( 10 ).until(
             wait_conditions.element.visible.select(
                 "table.directory-listing-table" ) )
+        self.browser.show_mouse()
         table = self.browser.select_one( "table.directory-listing-table" )
         files = table.select( 'a' )
         for f in files:

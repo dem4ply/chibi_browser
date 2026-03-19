@@ -3,15 +3,18 @@ import datetime
 import time
 import selenium
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from chibi_browser.web_element import Chibi_web_element
+
+from chibi.file.temp import Chibi_temp_path
+from chibi.file import Chibi_path
 
 
 logger = logging.getLogger( 'chibi_browser.snipepts' )
 
 
 def build_chrome( *args, download_folder=None ):
+    from selenium.webdriver.chrome.options import Options
     options = Options()
     if download_folder:
         options.add_experimental_option(
@@ -32,21 +35,86 @@ def build_chrome( *args, download_folder=None ):
     return driver
 
 
+def force_patcher_to_use_undetected( directory ):
+    # source:
+    # https://github.com/ultrafunkamsterdam/undetected-chromedriver/issues/528
+    import undetected_chromedriver as uc
+    # copy the chromedriver in directory
+    exe = uc.Patcher.exe_name % ""
+    exe = f"undetected_{exe}"
+    src = Chibi_path( uc.Patcher.data_path )
+    src = src + exe
+    # src = os.path.join(uc.Patcher.data_path, exe)
+    # executable_path = os.path.join(directory, exe)
+    executable_path = directory + exe
+    src.copy( executable_path )
+    # shutil.copyfile(src, executable_path)
+
+    # monkey patch the Patcher class
+    class PatcherWithForcedExecutablePath( uc.Patcher ):
+        def __init__( self, *args, **kw ):
+            kw[ "executable_path" ] = executable_path
+            super().__init__( *args, **kw )
+
+    uc.Patcher = PatcherWithForcedExecutablePath
+
+    return executable_path
+
+
 def build_undetected_chrome( *args, download_folder=None ):
-    import undetected as uc
+    # import undetected as uc
+    try:
+        import undetected_chromedriver as uc
+        from undetected_chromedriver.options import ChromeOptions as Options
+    except ImportError:
+        logger.exception( (
+            'se nesesita instalar undetected_chromedriver '
+            '"pip install undetected_chromedriver"' ) )
+        raise
 
     options = Options()
+    pref = {}
     if download_folder:
-        options.add_experimental_option(
-            'prefs', {
-                "download.default_directory": download_folder,
-                "savefile.default_directory": download_folder,
-                "download.prompt_for_download": False,
-            } )
+        pref = pref.update( {
+            "download.default_directory": download_folder,
+            "savefile.default_directory": download_folder,
+            "download.prompt_for_download": False,
+            "download.directory_upgrade": True,
+            "plugins.always_open_pdf_externally": True
+        } )
+        options.add_argument( '--handle_prefs' )
+        options.add_argument( "--disable-popup-blocking" )
+        options.add_argument( "--disable-web-security" )
+
+    options.add_argument("--disable-notifications")
+    pref.update( {
+        "credentials_enable_service": False,
+        "profile.password_manager_enabled": False,
+        "profile.password_manager_leak_detection": False,
+    } )
+    options.add_experimental_option( 'prefs', pref )
+
     # options.add_argument( "--headless=new" )
     desire_capabilities = DesiredCapabilities.CHROME
     desire_capabilities[ 'pageLoadStrategy' ] = 'eager'
-    driver = uc.Chrome( version_main=145, options=options )
+
+    temp_path = Chibi_temp_path( delete_on_del=False )
+    executable_path = force_patcher_to_use_undetected( temp_path )
+
+    driver = uc.Chrome(
+        version_main=145, options=options,
+        executable_path=executable_path )
+    if download_folder:
+        # se usaba para cambiar las opciones de descarga
+        # despues de iniciar el driver
+        """
+        params = {
+            "behavior": "allow",
+            "downloadPath": download_folder,
+        }
+        driver.execute_cdp_cmd( "Page.setDownloadBehavior", params )
+        """
+
     """
     driver = uc.Chrome(
         version_main=145,
@@ -57,8 +125,12 @@ def build_undetected_chrome( *args, download_folder=None ):
 
 
 def build_driver( *args, **kw ):
-    return build_chrome( *args, **kw )
-    return build_undetected_chrome( *args, **kw )
+    try:
+        return build_undetected_chrome( *args, **kw )
+    except ImportError:
+        logger.warning(
+            "no se pudo usar undetected chrome se usara chrome regular" )
+        return build_chrome( *args, **kw )
 
 
 def wait_to_browser_close( browser, timeout=None ):
@@ -78,3 +150,59 @@ def wait_to_browser_close( browser, timeout=None ):
             delta = current - start
             if delta.total_seconds() > timeout:
                 break
+
+
+js_code_for_hide_mouse = """
+var seleniumFollowerImg = document.getElementById( "selenium_mouse_follower" )
+
+if ( seleniumFollowerImg !== undefined )
+    seleniumFollowerImg.style.display = 'none'
+    """
+
+js_code_for_mouse = """
+var seleniumFollowerImg = document.getElementById( "selenium_mouse_follower" )
+
+if ( seleniumFollowerImg !== undefined )
+{
+    var seleniumFollowerImg = document.createElement("img");
+    seleniumFollowerImg.setAttribute('src', 'data:image/png;base64,'
+        + 'iVBORw0KGgoAAAANSUhEUgAAABQAAAAeCAQAAACGG/bgAAAAAmJLR0QA'
+        + '/4ePzL8AAAAJcEhZcwAA'
+        + 'HsYAAB7GAZEt8iwAAAAHdElNRQfgAwgMIwdxU/i7AAABZklEQVQ4y43TsU4UURSH'
+        + '8W+XmYwkS2I0'
+        + '9CRKpKGhsvIJjG9giQmliHFZlkUIGnEF7KTiCagpsYHWhoTQaiUUxL'
+        + 'ixYZb5KAAZZhbunu7O/PKf'
+        + 'e+fcA+/pqwb4DuximEqXhT4iI8dMpBWEsWsu'
+        + 'GYdpZFttiLSSgTvhZ1W/SvfO1CvYdV1kPghV68a3'
+        + '0zzUWZH5pBqEui7dnqlFmLoq0gxC1XfGZd'
+        + 'oLal2kea8ahLoqKXNAJQBT2yJzwUTVt0bS6ANqy1ga'
+        + 'VCEq/oVTtjji4hQVhhnlYBH4WIJV9v'
+        + 'lkXLm+10R8oJb79Jl1j9UdazJRGpkrmNkSF9SOz2T71s7M'
+        + 'SIfD2lmmfjGSRz3hK8l4w1P+bah/HJL'
+        + 'N0sys2JSMZQB+jKo6KSc8vLlLn5ikzF4268Wg2+pPOWW6'
+        + 'ONcpr3PrXy9VfS473M/D7H+TLmrqsX'
+        + 'tOGctvxvMv2oVNP+Av0uHbzbxyJaywyUjx8TlnPY2YxqkD'
+        + 'dAAAAABJRU5ErkJggg==');
+
+    seleniumFollowerImg.setAttribute('id', 'selenium_mouse_follower');
+    seleniumFollowerImg.setAttribute(
+        'style', 'position: absolute; z-index: 99999999999;
+        pointer-events: none;');
+    document.body.appendChild(seleniumFollowerImg);
+
+    document.onmousemove = function(e) {
+        const mousePointer = document.getElementById(
+            'selenium_mouse_follower');
+        mousePointer.style.left = e.pageX + 'px';
+        mousePointer.style.top = e.pageY + 'px';
+    }
+}
+    """
+
+
+def add_mouse_to_selenium( driver ):
+    driver.execute_script( js_code_for_mouse )
+
+
+def hide_mouse_to_selenium( driver ):
+    driver.execute_script( js_code_for_hide_mouse )

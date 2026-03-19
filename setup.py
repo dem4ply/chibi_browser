@@ -8,7 +8,13 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = [ 'chibi_site>=0.1.1', 'selenium>=4.41', '' ]
+requirements = [ 'chibi_site>=0.1.1', 'selenium>=4.41', 'humancursor>=1.1.5' ]
+requirements_undectected = [
+    'undetected-chromedriver>=3.5.5', 'setuptools>=82' ]
+
+requirements_extra = {
+    'undetected': requirements_undectected
+}
 
 setup(
     author="dem4ply",
@@ -23,6 +29,7 @@ setup(
     ],
     description="Capa para controlar selenium para chibi_ste",
     install_requires=requirements,
+    install_requires_extra=requirements_extra,
     license="WTFPL",
     long_description=readme + '\n\n' + history,
     include_package_data=True,

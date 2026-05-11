@@ -10,6 +10,7 @@ from chibi_site.soup import Chibi_soup
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from .press_key import Press_key
+from .wait import Wait
 
 
 logger = logging.getLogger( 'chibi_browser' )
@@ -121,8 +122,22 @@ class Chibi_browser( Chibi_site ):
         return next( filter( func, elements ) )
 
     def wait( self, timeout=5, msg=None ):
+        """
+        crea la clase de espera
+
+        Examples
+        --------
+        Examples
+        --------
+        >>>browser = Chibi_browser( "https://antcpt.com/score_detector/" )
+        >>>browser.wait().until.document.ready()
+        >>>browser.wait().until(
+            wait_conditions.element.select( "div.well big").wait(
+            lambda x: "score" in x.text.lower() ) )
+        """
         if msg:
             logger.info( msg )
+        return Wait( self, timeout=timeout )
         wait_driver = WebDriverWait( self.browser, timeout=timeout )
         return wait_driver
 

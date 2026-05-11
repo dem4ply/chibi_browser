@@ -8,6 +8,7 @@ from chibi_browser.web_element import Chibi_web_element
 
 from chibi.file.temp import Chibi_temp_path
 from chibi.file import Chibi_path
+from chibi.config import configuration
 
 
 logger = logging.getLogger( 'chibi_browser.snipepts' )
@@ -75,7 +76,7 @@ def build_undetected_chrome( *args, download_folder=None ):
     options = Options()
     pref = {}
     if download_folder:
-        pref = pref.update( {
+        pref.update( {
             "download.default_directory": download_folder,
             "savefile.default_directory": download_folder,
             "download.prompt_for_download": False,
@@ -101,8 +102,9 @@ def build_undetected_chrome( *args, download_folder=None ):
     temp_path = Chibi_temp_path( delete_on_del=False )
     executable_path = force_patcher_to_use_undetected( temp_path )
 
+    version = configuration.chibi_browser.chromium.get( "version", None )
     driver = uc.Chrome(
-        version_main=145, options=options,
+        version_main=version, options=options,
         executable_path=executable_path )
     if download_folder:
         # se usaba para cambiar las opciones de descarga
@@ -117,7 +119,7 @@ def build_undetected_chrome( *args, download_folder=None ):
 
     """
     driver = uc.Chrome(
-        version_main=145,
+        version_main=version,
         desired_capabilities=desire_capabilities, options=options )
     """
     driver._web_element_cls = Chibi_web_element
@@ -126,6 +128,7 @@ def build_undetected_chrome( *args, download_folder=None ):
 
 def build_driver( *args, **kw ):
     try:
+        return build_chrome( *args, **kw )
         return build_undetected_chrome( *args, **kw )
     except ImportError:
         logger.warning(
@@ -186,8 +189,8 @@ if ( seleniumFollowerImg !== undefined )
 
     seleniumFollowerImg.setAttribute('id', 'selenium_mouse_follower');
     seleniumFollowerImg.setAttribute(
-        'style', 'position: absolute; z-index: 99999999999;
-        pointer-events: none;');
+        'style', 'position: absolute; z-index: 99999999999;'
+        + 'pointer-events: none;' );
     document.body.appendChild(seleniumFollowerImg);
 
     document.onmousemove = function(e) {

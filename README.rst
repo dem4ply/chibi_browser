@@ -42,6 +42,10 @@ Preparar una nueva instancia y usarla para navegar y descargar archivos
 		wait_conditions.element.visible.select(
 				"table.directory-listing-table" ) )
 
+	# alternativa de wait
+	harvest_moon_rom.wait( 10 ).until.element.invisible.select(
+		"table.directory-listing-table" )
+
 	# buscar el archivo torrent y hacerle click para descargarlo
 	table = harvest_moon_rom.select_one( "table.directory-listing-table" )
 	files = table.select( 'a' )

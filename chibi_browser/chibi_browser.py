@@ -27,6 +27,7 @@ class Chibi_browser( Chibi_site ):
             logger.info( "contrullendo selenium driver" )
             self._browser = self.build_driver()
             logger.info( "abriendo navegador" )
+            logger.info( f"abriendo url: {self.url}" )
             self._browser.get( self.url )
             return self._browser
 
@@ -40,6 +41,7 @@ class Chibi_browser( Chibi_site ):
 
     def get( self, *args, **kw ):
         if not args and not kw:
+            logger.info( f"abriendo url: {self.url}" )
             self.browser.get( self )
         else:
             raise NotImplementedError(

@@ -30,16 +30,54 @@ class Wait_until:
     def document( self ):
         return Document( self.wait )
 
+    @property
+    def element( self ):
+        return Element( self.wait )
+
     def __call__( self, method, message="" ):
         self.wait().until( method, message=message )
 
+    def is_true( self, method, message="" ):
+        """
+        espera a que la funcion regrese true
 
-class Document:
+        Parameters
+        ----------
+        method: callable
+        """
+        self.wait().until( lambda x: method(), message=message )
+
+
+class Basic_wait:
     def __init__( self, wait ):
         self.wait = wait
 
+
+class Document( Basic_wait ):
     def ready( self ):
         """
         espera a que el documento este cargado
         """
         return self.wait.until( wait_conditions.document.ready )
+
+
+class Element( Basic_wait ):
+    @property
+    def visible( self ):
+        return Visible( self.wait )
+
+    @property
+    def invisible( self ):
+        return Invisible( self.wait )
+
+
+class Visible( Basic_wait ):
+    def select( self, selector ):
+        return self.wait.until(
+            wait_conditions.element.visible.select( selector ) )
+
+
+class Invisible( Basic_wait ):
+    def select( self, selector ):
+        return self.wait.until(
+            wait_conditions.element.invisible.select( selector ) )

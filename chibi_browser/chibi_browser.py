@@ -37,6 +37,8 @@ class Chibi_browser( Chibi_site ):
         """
         if 'download_folder' in self.kw:
             kw[ 'download_folder' ] = str( self.kw.download_folder )
+        if 'detach' in self.kw:
+            kw[ 'detach' ] = bool( self.kw.detach )
         return self.build_driver_func( *args, **kw )
 
     def get( self, *args, **kw ):

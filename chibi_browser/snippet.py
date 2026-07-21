@@ -14,7 +14,11 @@ from chibi.config import configuration
 logger = logging.getLogger( 'chibi_browser.snipepts' )
 
 
-def build_chrome( *args, download_folder=None ):
+default_debugger_port = "9222"
+default_debugger_address = f"127.0.0.1:{default_debugger_port}"
+
+
+def build_options( download_folder=None ):
     from selenium.webdriver.chrome.options import Options
     options = Options()
     if download_folder:
@@ -27,12 +31,43 @@ def build_chrome( *args, download_folder=None ):
                 "download.prompt_for_download": False,
                 "download.directory_upgrade": True,
                 # It will not show PDF directly in chrome
-                "plugins.always_open_pdf_externally": True
-            }
+                "plugins.always_open_pdf_externally": True,
+            },
         )
-    # options.add_argument( "--headless=new" )
-    driver = webdriver.Chrome( options=options )
-    driver._web_element_cls = Chibi_web_element
+    return options
+
+
+def build_chrome( *args, download_folder=None, detach=False ):
+    from selenium.common.exceptions import SessionNotCreatedException
+
+    options = build_options( download_folder=download_folder )
+    if detach:
+        # options.add_experimental_option( 'detach', detach )
+        options.add_experimental_option(
+            "debuggerAddress", default_debugger_address )
+        try:
+            logger.info(
+                "intentado de connectar con chrome usando "
+                f"el la direcion {default_debugger_port}"
+            )
+            driver = webdriver.Chrome( options=options )
+            logger.info(
+                f"conecion exitosa con la direcion {default_debugger_port}"
+            )
+        except SessionNotCreatedException:
+            logger.info(
+                f"no se pudo conectar a chrome en {default_debugger_address},"
+                " se creara una nueva sesion" )
+            options = build_options( download_folder=download_folder )
+            options.add_experimental_option( 'detach', detach )
+            options.add_argument(
+                f"--remote-debugging-port={default_debugger_port}" )
+            driver = webdriver.Chrome( options=options )
+            driver._web_element_cls = Chibi_web_element
+    else:
+        # options.add_argument( "--headless=new" )
+        driver = webdriver.Chrome( options=options )
+        driver._web_element_cls = Chibi_web_element
     return driver
 
 

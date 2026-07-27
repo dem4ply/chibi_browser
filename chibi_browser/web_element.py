@@ -3,6 +3,7 @@ import random
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
+from chibi_atlas import Chibi_atlas
 from humancursor import WebCursor
 
 
@@ -54,10 +55,19 @@ class Chibi_web_element( WebElement ):
         actions = ActionChains( self.driver )
         actions.move_to_element( self ).perform()
 
-    def click( self, *, random_coficient=0 ):
+    def scroll_to_view( self, *, random_coficient=0 ):
+        self.sleep( random_coficient )
+        self.driver.execute_script(
+            "arguments[0].scrollIntoView();", self
+        )
+
+    def click( self, *, simple=False, random_coficient=0 ):
         """
         mueve el mouse a la pocicion del elemento y hace click
         """
+        if simple:
+            super().click()
+            return
         self.hover_mouse( random_coficient=random_coficient )
         self.sleep( random_coficient )
         self.human.click()
@@ -78,6 +88,15 @@ class Chibi_web_element( WebElement ):
     def sleep( self, random_coficient ):
         random_time = random_coficient * random.random()
         time.sleep( random_time )
+
+    @property
+    def attrs( self ):
+        from chibi_browser.snippet import js_get_all_attrs
+        attributes = self.run_script( js_get_all_attrs )
+        return Chibi_atlas( attributes )
+
+    def run_script( self, js_script ):
+        return self.driver.execute_script( js_script, self )
 
     @property
     def human( self ):

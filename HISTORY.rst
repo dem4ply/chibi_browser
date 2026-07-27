@@ -2,6 +2,15 @@
 History
 =======
 
+
+********************
+1.3.0 ( 2026-07-27 )
+********************
+
+* se cambio al uso de undetected
+* se agrego la propidad obtener todos los atributos de un tag
+* se agrego la funcionalidad de detach
+
 ********************
 1.2.0 ( 2026-05-15 )
 ********************

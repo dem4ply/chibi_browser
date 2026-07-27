@@ -36,6 +36,31 @@ def build_options( download_folder=None ):
         )
     return options
 
+def build_options_undetected( download_folder=None ):
+    # from undetected_chromedriver.options import ChromeOptions as Options
+    from undetected.options import ChromeOptions as Options
+    options = Options()
+    pref = {}
+    if download_folder:
+        pref.update( {
+            "download.default_directory": download_folder,
+            "savefile.default_directory": download_folder,
+            "download.prompt_for_download": False,
+            "download.directory_upgrade": True,
+            "plugins.always_open_pdf_externally": True
+        } )
+        options.add_argument( '--handle_prefs' )
+        options.add_argument( "--disable-popup-blocking" )
+        options.add_argument( "--disable-web-security" )
+    options.add_argument("--disable-notifications")
+    pref.update( {
+        "credentials_enable_service": False,
+        "profile.password_manager_enabled": False,
+        "profile.password_manager_leak_detection": False,
+    } )
+    options.add_experimental_option( 'prefs', pref )
+    return options
+
 
 def build_chrome( *args, download_folder=None, detach=False ):
     from selenium.common.exceptions import SessionNotCreatedException
@@ -97,38 +122,19 @@ def force_patcher_to_use_undetected( directory ):
     return executable_path
 
 
-def build_undetected_chrome( *args, download_folder=None ):
+def build_undetected_chrome( *args, download_folder=None, detach=False ):
     # import undetected as uc
     try:
-        import undetected_chromedriver as uc
-        from undetected_chromedriver.options import ChromeOptions as Options
+        import undetected as uc
+        #import undetected_chromedriver as uc
+        #from undetected_chromedriver.options import ChromeOptions as Options
     except ImportError:
         logger.exception( (
             'se nesesita instalar undetected_chromedriver '
             '"pip install undetected_chromedriver"' ) )
         raise
 
-    options = Options()
-    pref = {}
-    if download_folder:
-        pref.update( {
-            "download.default_directory": download_folder,
-            "savefile.default_directory": download_folder,
-            "download.prompt_for_download": False,
-            "download.directory_upgrade": True,
-            "plugins.always_open_pdf_externally": True
-        } )
-        options.add_argument( '--handle_prefs' )
-        options.add_argument( "--disable-popup-blocking" )
-        options.add_argument( "--disable-web-security" )
-
-    options.add_argument("--disable-notifications")
-    pref.update( {
-        "credentials_enable_service": False,
-        "profile.password_manager_enabled": False,
-        "profile.password_manager_leak_detection": False,
-    } )
-    options.add_experimental_option( 'prefs', pref )
+    options = build_options_undetected( download_folder=download_folder )
 
     # options.add_argument( "--headless=new" )
     desire_capabilities = DesiredCapabilities.CHROME
@@ -137,9 +143,14 @@ def build_undetected_chrome( *args, download_folder=None ):
     temp_path = Chibi_temp_path( delete_on_del=False )
     executable_path = force_patcher_to_use_undetected( temp_path )
 
+    """
     version = configuration.chibi_browser.chromium.get( "version", None )
     driver = uc.Chrome(
         version_main=version, options=options,
+        executable_path=executable_path )
+    """
+    driver = uc.Chrome(
+        options=options,
         executable_path=executable_path )
     if download_folder:
         # se usaba para cambiar las opciones de descarga
@@ -163,8 +174,8 @@ def build_undetected_chrome( *args, download_folder=None ):
 
 def build_driver( *args, **kw ):
     try:
-        return build_chrome( *args, **kw )
         return build_undetected_chrome( *args, **kw )
+        # return build_chrome( *args, **kw )
     except ImportError:
         logger.warning(
             "no se pudo usar undetected chrome se usara chrome regular" )
@@ -244,3 +255,12 @@ def add_mouse_to_selenium( driver ):
 
 def hide_mouse_to_selenium( driver ):
     driver.execute_script( js_code_for_hide_mouse )
+
+
+js_get_all_attrs = """
+var items = {};
+for (var i = 0; i < arguments[0].attributes.length; i++) {
+    items[arguments[0].attributes[i].name] = arguments[0].attributes[i].value;
+};
+return items;
+"""

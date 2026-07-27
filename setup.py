@@ -9,8 +9,13 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
 requirements = [ 'chibi_site>=0.1.1', 'selenium>=4.41', 'humancursor>=1.1.5' ]
+
+# version vieja
+# requirements_undectected = [
+#     'undetected-chromedriver>=3.5.5', 'setuptools>=82' ]
+
 requirements_undectected = [
-    'undetected-chromedriver>=3.5.5', 'setuptools>=82' ]
+    'undetected>=0.0.12', 'setuptools>=82' ]
 
 requirements_extra = {
     'undetected': requirements_undectected

@@ -41,8 +41,14 @@ class Chibi_browser( Chibi_site ):
             kw[ 'detach' ] = bool( self.kw.detach )
         return self.build_driver_func( *args, **kw )
 
-    def get( self, *args, **kw ):
-        if not args and not kw:
+    def get( self, *args, url=None, **kw ):
+        if url is not None:
+            if not url:
+                raise NotImplementedError(
+                    f"no esta implementado url vacia '{url}'" )
+            logger.info( f"abriendo url: '{url}'" )
+            self.browser.get( url )
+        elif not args and not kw:
             logger.info( f"abriendo url: {self.url}" )
             self.browser.get( self )
         else:
@@ -86,7 +92,7 @@ class Chibi_browser( Chibi_site ):
     def refresh( self ):
         self.browser.refresh()
 
-    def select( self, selector ):
+    def select( self, selector, func=None, with_attributes=None ):
         """
         atajo para buscar elementos con css
 
@@ -96,12 +102,23 @@ class Chibi_browser( Chibi_site ):
         ----------
         selector: str
             selector de css con el que se buscaran elementos
+        func: function
+            funcion que se usara para filtrar los resultados
+        with_attributes: dict
+            usa los keys como atributos y el value usa la operacion in
 
         Returns
         -------
-        WebElement
+        List of WebElement
         """
-        return self.browser.find_elements( By.CSS_SELECTOR, selector )
+        if func is None:
+            result = self.browser.find_elements( By.CSS_SELECTOR, selector )
+        else:
+            result = filter( func, result )
+        if with_attributes:
+            for k, v in with_attributes.items():
+                result = filter( lambda x: v in x.get_attribute( k ), result )
+        return list( result )
 
     def select_one( self, selector, func=None ):
         """
@@ -175,3 +192,12 @@ class Chibi_browser( Chibi_site ):
         regresa el user agent del navegador
         """
         return self.browser.execute_script( "return navigator.userAgent;" )
+
+    def scroll_to_end( self ):
+        self.browser.execute_script(
+            "window.scrollTo( 0, document.body.scrollHeight );"
+        )
+
+    @property
+    def current_url( self ):
+        return Chibi_site( self.browser.current_url )

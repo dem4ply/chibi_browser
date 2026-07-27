@@ -8,7 +8,6 @@ from chibi_browser.web_element import Chibi_web_element
 
 from chibi.file.temp import Chibi_temp_path
 from chibi.file import Chibi_path
-from chibi.config import configuration
 
 
 logger = logging.getLogger( 'chibi_browser.snipepts' )
@@ -35,6 +34,7 @@ def build_options( download_folder=None ):
             },
         )
     return options
+
 
 def build_options_undetected( download_folder=None ):
     # from undetected_chromedriver.options import ChromeOptions as Options
@@ -126,8 +126,8 @@ def build_undetected_chrome( *args, download_folder=None, detach=False ):
     # import undetected as uc
     try:
         import undetected as uc
-        #import undetected_chromedriver as uc
-        #from undetected_chromedriver.options import ChromeOptions as Options
+        # import undetected_chromedriver as uc
+        # from undetected_chromedriver.options import ChromeOptions as Options
     except ImportError:
         logger.exception( (
             'se nesesita instalar undetected_chromedriver '

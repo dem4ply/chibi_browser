@@ -32,7 +32,7 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
     ],
-    description="Capa para controlar selenium para chibi_ste",
+    description="Capa para controlar selenium para chibi_site",
     install_requires=requirements,
     install_requires_extra=requirements_extra,
     license="WTFPL",

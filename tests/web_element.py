@@ -12,7 +12,8 @@ class Test_web_element( unittest.TestCase ):
         cls.browser = Chibi_browser( cls.url )
 
     def test_driver_should_be_chibi_web_element( self ):
-        self.assertEqual( self.browser._web_element_cls, Chibi_web_element )
+        self.assertEqual(
+            self.browser.browser._web_element_cls, Chibi_web_element )
 
     def test_select_with_attributes_should_be_a_list( self ):
         self.browser.get()

@@ -141,7 +141,7 @@ def build_undetected_chrome( *args, download_folder=None, detach=False ):
     desire_capabilities[ 'pageLoadStrategy' ] = 'eager'
 
     temp_path = Chibi_temp_path( delete_on_del=False )
-    executable_path = force_patcher_to_use_undetected( temp_path )
+    # executable_path = force_patcher_to_use_undetected( temp_path )
 
     """
     version = configuration.chibi_browser.chromium.get( "version", None )
@@ -149,9 +149,8 @@ def build_undetected_chrome( *args, download_folder=None, detach=False ):
         version_main=version, options=options,
         executable_path=executable_path )
     """
-    driver = uc.Chrome(
-        options=options,
-        executable_path=executable_path )
+
+    driver = uc.Chrome( options=options, )
     if download_folder:
         # se usaba para cambiar las opciones de descarga
         # despues de iniciar el driver
@@ -177,7 +176,7 @@ def build_driver( *args, **kw ):
         return build_undetected_chrome( *args, **kw )
         # return build_chrome( *args, **kw )
     except ImportError:
-        logger.warning(
+        logger.exception(
             "no se pudo usar undetected chrome se usara chrome regular" )
         return build_chrome( *args, **kw )
 

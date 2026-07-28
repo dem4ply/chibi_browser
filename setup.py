@@ -42,6 +42,6 @@ setup(
     name='chibi_browser',
     packages=find_packages(include=['chibi_browser', 'chibi_browser.*']),
     url='https://github.com/dem4ply/chibi_browser',
-    version='1.3.0',
+    version='1.3.1',
     zip_safe=False,
 )

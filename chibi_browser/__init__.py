@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 __author__ = """dem4ply"""
 __email__ = 'dem4ply@gmail.com'
-__version__ = '1.3.0'
+__version__ = '1.3.1'
 
 
 from .chibi_browser import Chibi_browser

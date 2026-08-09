@@ -52,11 +52,16 @@ def build_options_undetected( download_folder=None ):
         options.add_argument( '--handle_prefs' )
         options.add_argument( "--disable-popup-blocking" )
         options.add_argument( "--disable-web-security" )
+
     options.add_argument("--disable-notifications")
+    options.add_argument("--disable-render-loop")
+    options.add_argument("--blink-settings=imagesEnabled=false")
+    options.add_argument("--disable-gpu")
     pref.update( {
         "credentials_enable_service": False,
         "profile.password_manager_enabled": False,
         "profile.password_manager_leak_detection": False,
+        "profile.managed_default_content_settings.images": 2,
     } )
     options.add_experimental_option( 'prefs', pref )
     return options

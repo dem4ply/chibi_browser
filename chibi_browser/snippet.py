@@ -4,42 +4,21 @@ import time
 import selenium
 from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from selenium.common.exceptions import SessionNotCreatedException
 from chibi_browser.web_element import Chibi_web_element
 
 from chibi.file.temp import Chibi_temp_path
 from chibi.file import Chibi_path
+from chibi.config import configuration
 
 
 logger = logging.getLogger( 'chibi_browser.snipepts' )
 
 
-default_debugger_port = "9222"
-default_debugger_address = f"127.0.0.1:{default_debugger_port}"
-
-
-def build_options( download_folder=None ):
-    from selenium.webdriver.chrome.options import Options
-    options = Options()
-    if download_folder:
-        options.add_experimental_option(
-            'prefs', {
-                # Change default directory for downloads
-                "download.default_directory": download_folder,
-                "savefile.default_directory": download_folder,
-                # To auto download the file
-                "download.prompt_for_download": False,
-                "download.directory_upgrade": True,
-                # It will not show PDF directly in chrome
-                "plugins.always_open_pdf_externally": True,
-            },
-        )
-    return options
-
-
-def build_options_undetected( download_folder=None ):
-    # from undetected_chromedriver.options import ChromeOptions as Options
-    from undetected.options import ChromeOptions as Options
-    options = Options()
+def build_options( download_folder=None, options=None ):
+    if options is None:
+        from selenium.webdriver.chrome.options import Options
+        options = Options()
     pref = {}
     if download_folder:
         pref.update( {
@@ -55,22 +34,42 @@ def build_options_undetected( download_folder=None ):
 
     options.add_argument("--disable-notifications")
     options.add_argument("--disable-render-loop")
-    options.add_argument("--blink-settings=imagesEnabled=false")
     options.add_argument("--disable-gpu")
+    default_content_settings = (
+        configuration.chibi_browser.default_content_settings )
+    if default_content_settings:
+        if default_content_settings.images:
+            images = default_content_settings.images
+            options.add_argument("--blink-settings=imagesEnabled=true")
+        else:
+            images = 2
+            options.add_argument("--blink-settings=imagesEnabled=false")
+    else:
+        images = 2
+        options.add_argument("--blink-settings=imagesEnabled=false")
     pref.update( {
         "credentials_enable_service": False,
         "profile.password_manager_enabled": False,
         "profile.password_manager_leak_detection": False,
-        "profile.managed_default_content_settings.images": 2,
+        "profile.managed_default_content_settings.images": images,
     } )
     options.add_experimental_option( 'prefs', pref )
     return options
 
 
+def build_options_undetected( download_folder=None ):
+    # from undetected_chromedriver.options import ChromeOptions as Options
+    from undetected.options import ChromeOptions as Options
+    options = Options()
+    options = build_options( download_folder=download_folder, options=options )
+    return options
+
+
 def build_chrome( *args, download_folder=None, detach=False ):
-    from selenium.common.exceptions import SessionNotCreatedException
 
     options = build_options( download_folder=download_folder )
+    default_debugger_port = "9222"
+    default_debugger_address = f"127.0.0.1:{default_debugger_port}"
     if detach:
         # options.add_experimental_option( 'detach', detach )
         options.add_experimental_option(
@@ -129,6 +128,8 @@ def force_patcher_to_use_undetected( directory ):
 
 def build_undetected_chrome( *args, download_folder=None, detach=False ):
     # import undetected as uc
+    default_debugger_port = "9322"
+    default_debugger_address = f"127.0.0.1:{default_debugger_port}"
     try:
         import undetected as uc
         # import undetected_chromedriver as uc
@@ -145,33 +146,44 @@ def build_undetected_chrome( *args, download_folder=None, detach=False ):
     desire_capabilities = DesiredCapabilities.CHROME
     desire_capabilities[ 'pageLoadStrategy' ] = 'eager'
 
-    temp_path = Chibi_temp_path( delete_on_del=False )
-    # executable_path = force_patcher_to_use_undetected( temp_path )
+    if detach:
+        # options.add_experimental_option( 'detach', detach )
+        options.add_experimental_option(
+            "debuggerAddress", default_debugger_address )
+        options.debugger_address = default_debugger_address
+        try:
+            logger.info(
+                "intentado de connectar con chrome usando "
+                f"el la direcion {default_debugger_port}"
+            )
+            if configuration.chibi_browser.user_profile_path:
+                user_profile_path = (
+                    configuration.chibi_browser.user_profile_path )
+            driver = uc.Chrome(
+                options=options, user_data_dir=user_profile_path )
+            logger.info(
+                f"conecion exitosa con la direcion {default_debugger_port}"
+            )
+        except SessionNotCreatedException:
+            logger.info(
+                f"no se pudo conectar a chrome en {default_debugger_address},"
+                " se creara una nueva sesion" )
+            options = build_options_undetected(
+                download_folder=download_folder )
+            options.add_experimental_option( 'detach', detach )
+            options.add_argument(
+                f"--remote-debugging-port={default_debugger_port}" )
+            driver = uc.Chrome( options=options, )
+    else:
+        # options.add_argument( "--headless=new" )
+        if configuration.chibi_browser.user_profile_path:
+            user_profile_path = (
+                configuration.chibi_browser.user_profile_path )
+        else:
+            user_profile_path = None
+        driver = uc.Chrome(
+            options=options, user_data_dir=user_profile_path )
 
-    """
-    version = configuration.chibi_browser.chromium.get( "version", None )
-    driver = uc.Chrome(
-        version_main=version, options=options,
-        executable_path=executable_path )
-    """
-
-    driver = uc.Chrome( options=options, )
-    if download_folder:
-        # se usaba para cambiar las opciones de descarga
-        # despues de iniciar el driver
-        """
-        params = {
-            "behavior": "allow",
-            "downloadPath": download_folder,
-        }
-        driver.execute_cdp_cmd( "Page.setDownloadBehavior", params )
-        """
-
-    """
-    driver = uc.Chrome(
-        version_main=version,
-        desired_capabilities=desire_capabilities, options=options )
-    """
     driver._web_element_cls = Chibi_web_element
     return driver
 

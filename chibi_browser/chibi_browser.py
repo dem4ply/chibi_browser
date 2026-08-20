@@ -28,7 +28,8 @@ class Chibi_browser( Chibi_site ):
             self._browser = self.build_driver()
             logger.info( "abriendo navegador" )
             logger.info( f"abriendo url: {self.url}" )
-            self._browser.get( self.url )
+            if 'detach' not in self.kw:
+                self._browser.get( self.url )
             return self._browser
 
     def build_driver( self, *args, **kw ):

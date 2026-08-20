@@ -2,6 +2,12 @@
 History
 =======
 
+********************
+1.4.0 ( 2026-08-20 )
+********************
+
+* se agrego configuration.chibi_browser.default_content_settings.images
+* se agrego configuration.chibi_browser.user_profile_path
 
 ********************
 1.3.0 ( 2026-07-27 )
